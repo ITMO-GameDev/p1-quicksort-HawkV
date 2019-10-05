@@ -61,7 +61,7 @@ void sort(T *first, T *last, Compare&& lambda) { // Основной алгор�
 	size_t length = last - first;
 
 	while (length > 1) {
-		if (length < 10) {
+		if (length < 90) { // Найденный экспериментально параметр
 			insertion_sort(first, last, lambda);
 
 			return;
@@ -85,8 +85,4 @@ void sort(T *first, T *last, Compare&& lambda) { // Основной алгор�
 
 		length = last - first;
 	}
-}
-
-int main()
-{
 }

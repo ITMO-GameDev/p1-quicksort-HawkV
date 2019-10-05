@@ -84,15 +84,15 @@ TEST(SortTest, ArraySimilarNumbers) { // Массив с одинаковыми 
 	}
 }
 
-TEST(SortTest, GeneralCase) { // Общий случай
-	const int n = 1000;
+TEST(SortTest, GeneralCase) { // Общий случай (также проверка на то, что оно не свалится в StackOverflow)
+	const int n = 100000;
 
 	double arr[n];
 	double sortedArr[n];
 
 	for (size_t i = 0; i < n; i++)
 	{
-		arr[i] = (std::rand() % 10000) * 0.1;
+		arr[i] = (std::rand() % 100000) * 0.1;
 	}
 
 	double librarySortedArray[n];

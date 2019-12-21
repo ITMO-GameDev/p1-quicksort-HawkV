@@ -61,6 +61,6 @@ TEST(ContainerTest, Iterator) { // Проверка итератора
   
   it.next();
   it.remove();
-  EXPECT_TRUE(it.get() == 1) << it.get();
+  EXPECT_TRUE(it.get() == 2) << it.get();
   EXPECT_TRUE(array.size() == n);
 }

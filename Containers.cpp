@@ -59,8 +59,7 @@ class Array final
 				}
 
 				void insert(const T& value) {
-					 enclosingArray.insert(currentIndex + 1, value);
-					 currentIndex++;
+					 enclosingArray.insert(currentIndex, value);
 				}
 
 				void remove() {

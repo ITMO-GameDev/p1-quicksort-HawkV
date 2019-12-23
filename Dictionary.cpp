@@ -1,27 +1,19 @@
 #include <algorithm>
 
 template <typename K, typename V>
-class Node final {
-	public:
-		K key;
-		V value;
-
-		Node(K key, V value): key(key), value(value) {}
-		Node(const Node<K, V>& node): key(node.key), value(node.value) { }
-};
-
-template <typename K, typename V>
 class AVLTree final {
 public:
 	AVLTree(AVLTree<K, V>* parent = nullptr) : 
 		left(nullptr), 
 		right(nullptr), 
 		parent(parent), 
-		data(nullptr),
+		key(nullptr),
+		value(nullptr),
 		height(1) {}
 
 	~AVLTree() {
-		delete data;
+		delete key;
+		delete value;
 		delete left;
 		delete right;
 	}
@@ -34,8 +26,8 @@ public:
 
 	void updateHeight() {
 		height = std::max(
-			 left != nullptr ?  left->height : 0,
-			right != nullptr ? right->height : 0
+			right != nullptr ? right->height : 0,
+			 left != nullptr ?  left->height : 0
 		) + 1;
 	}
 
@@ -66,15 +58,20 @@ public:
 
 	void rotateRight()
 	{
-		AVLTree* root = this;
+		AVLTree* root = this->left;
+
 		bool hasParent = this->parent != nullptr;
-		bool isLeft = hasParent && (this->parent->left == root);
+		bool isLeft = hasParent && (this->parent->left == this);
 
 		this->left = root->right;
 		root->right = this;
 
 		root->parent = this->parent;
 		this->parent = root;
+
+		if (this->left != nullptr) {
+			this->left->parent = this;
+		}
 
 		this->updateHeight();
 		root->updateHeight();
@@ -94,14 +91,19 @@ public:
 	void rotateLeft()
 	{
 		AVLTree* root = this->right;
+
 		bool hasParent = this->parent != nullptr;
-		bool isLeft = hasParent && (this->parent->left == root);
+		bool isLeft = hasParent && (this->parent->left == this);
 		
 		this->right = root->left;
 		root->left = this;
 
 		root->parent = this->parent;
 		this->parent = root;
+
+		if (this->right != nullptr) {
+			this->right->parent = this;
+		}
 
 		this->updateHeight();
 		root->updateHeight();
@@ -118,87 +120,141 @@ public:
 		}
 	}
 
-	AVLTree* insert(const Node<K, V>& value) {
-		return this->_root()->_insert(value);
+	AVLTree* insert(const K& key, const V& value, bool *sizeChanged) {
+		return this->root()->_insert(key, value, sizeChanged);
 	}
 
 	AVLTree* find(const K& key) {
-		return this->_root()->_find(key);
+		return this->root()->_find(key);
 	}
 
-	AVLTree* del(const K& key) {
-		auto node = this->_root()->find(key);
+	AVLTree* remove(const K& key, bool *sizeChanged) {
+		auto node = this->root()->find(key);
 
 		if (node == nullptr) {
-			return nullptr;
+			sizeChanged = false;
+			return this;
 		}
 
 		auto parent = node->parent;
 		bool isLeft = parent->left == node;
 
-		if (node->height == 1) {
-			if (isLeft) {
-				parent->left = nullptr;
-			}
-			else {
-				parent->right = nullptr;
-			}
-
-			delete node;
-		}
-		else if (node->left != nullptr && node->right != nullptr) {
+		if (node->left != nullptr && node->right != nullptr) {
 			auto max = node->left->findMax();
 
-			node->data = max->data;
+			node->key = max->key;
+			node->value = max->value;
 
-			bool isLeftt = max->parent->left == max;
-			
-			if (isLeftt) {
+			if (max->parent->left == max) {
 				max->parent->left = nullptr;
 			}
 			else {
 				max->parent->right = nullptr;
 			}
+
+			*sizeChanged = true;
+
+			parent->balance();
+
+			return parent;
+		} 
+		
+		AVLTree<K, V>* childReplacement = nullptr;
+
+		if (node->height == 1) {
+			childReplacement = nullptr;
+
+			if (node->parent == nullptr) {
+				delete node->key;
+				delete node->value;
+
+				node->key = nullptr;
+				node->value = nullptr;
+
+				return node;
+			}
 		} else if (node->left == nullptr) {
-			if (isLeft) {
-				parent->left = node->right;
-			}
-			else {
-				parent->right = node->right;
-			}
-
-			delete node;
+			childReplacement = node->right;
 		} else if (node->right == nullptr) {
-			if (isLeft) {
-				parent->left = node->left;
-			}
-			else {
-				parent->right = node->left;
-			}
-
-			delete node;
+			childReplacement = node->left;
 		}
+
+		if (isLeft) {
+			parent->left = childReplacement;
+		}
+		else {
+			parent->right = childReplacement;
+		}
+
+		delete node;
 
 		parent->balance();
 
 		return parent;
 	}
 
-	AVLTree* findMax() {
-		if (data == nullptr) {
+	AVLTree* findMin() {
+		if (key == nullptr) {
 			return nullptr;
-		} else if (right != nullptr) {
-			return right->findMax();
-		} else {
+		}
+		else if (left != nullptr) {
+			return left->findMin();
+		}
+		else {
 			return this;
 		}
 	}
 
-	Node<K, V>* data;
-	int height;
+	AVLTree* findMax() {
+		if (key == nullptr) {
+			return nullptr;
+		}
+		else if (right != nullptr) {
+			return right->findMax();
+		}
+		else {
+			return this;
+		}
+	}
 
-private:
-	AVLTree* _root() {
+	AVLTree* next() {
+		if (right == nullptr) {
+			auto next = parent;
+
+			while ((*(next->key) < *key) && next->parent != nullptr) {			
+				next = next->parent;
+			}
+
+			if (next->parent == nullptr && (*(next->key) < *key)) {
+				return this;
+			}
+
+			return next;
+		} else {
+			return right->findMin();	
+		}
+	}
+
+	AVLTree* prev() {
+		if (left == nullptr) {
+			auto next = parent;
+
+			while ((*(next->key) > *key) && next->parent != nullptr) {
+				next = next->parent;
+			}
+
+			if (next->parent == nullptr && (*(next->key) > *key)) {
+				return this;
+			}
+
+			return next;
+		}
+		else {
+			return left->findMax();
+		}
+	}
+
+	AVLTree* root() {
 		auto root = this;
 
 		while (root->parent != nullptr) {
@@ -208,27 +264,37 @@ private:
 		return root;
 	}
 
-	AVLTree* _insert(const Node<K, V>& value) {
-		if (data == nullptr) {
-			data = new Node<K, V>(value);
-		} 
-		else if (data->key == value.key) {
-			data->value = value.value;
+	K* key;
+	V* value;
+	int height;
 
-			return nullptr;
-		} else if (data->key > value.key) {
+private:
+	AVLTree* _insert(const K& key, const V& value, bool *sizeChanged) {
+		*sizeChanged = true;
+
+		if (this->key == nullptr) {
+			this->key = new K(key);
+			this->value = new V(value);
+		} 
+		else if (*(this->key) == key) {
+			delete this->value;
+			this->value = new V(value);
+			*sizeChanged = false;
+
+			return this;
+		} else if (*(this->key) > key) {
 			if (left == nullptr) {
 				left = new AVLTree(this);
 			}
 
-			return left->_insert(value);
+			return left->_insert(key, value, sizeChanged);
 		}
 		else {
 			if (right == nullptr) {
 				right = new AVLTree(this);
 			}
 
-			return right->_insert(value);
+			return right->_insert(key, value, sizeChanged);
 		}
 
 		this->balance();
@@ -237,13 +303,13 @@ private:
 	}
 
 	AVLTree<K, V>* _find(const K& key) {
-		if (data == nullptr) {
+		if (this->key == nullptr) {
 			return nullptr;
 		}
-		else if (data->key == key) {
+		else if (*(this->key) == key) {
 			return this;
 		}
-		else if (data->key > key) {
+		else if (*(this->key) > key) {
 			return left != nullptr ? left->_find(key) : nullptr;
 		}
 		else {
@@ -259,24 +325,26 @@ class Dictionary final {
 	public:
 		Dictionary(): dictionarySize(0) {
 			tree = new AVLTree<K, V>();
+			sizeChanged = new bool();
 		}
 
 		~Dictionary() {
+			delete sizeChanged;
 			delete tree;
 		}
 
 		void put(const K& key, const V& value) {
-			auto result = tree->insert(Node<K, V>(key, value));
+			tree = tree->insert(key, value, sizeChanged);
 
-			if (result != nullptr) {
+			if (*sizeChanged) {
 				dictionarySize++;
 			}
 		}
 
 		void remove(const K& key) {
-			auto result = tree->del(key);
+			tree = tree->remove(key, sizeChanged);
 
-			if (result != nullptr) {
+			if (*sizeChanged) {
 				dictionarySize--;
 			}
 		}
@@ -295,10 +363,11 @@ class Dictionary final {
 			auto node = tree->find(key);
 
 			if (node == nullptr) {
-				node = tree->insert(Node<K, V>(key, *(new V())));
+				node = tree->insert(key, *(new V()), sizeChanged);
+				dictionarySize++;
 			}
 
-			return node->data->value;
+			return *(node->value);
 		}
 
 		int size() {
@@ -308,35 +377,48 @@ class Dictionary final {
 		class Iterator {
 			public:
 				const K& key() const {
-					return enclosingDictionary.tree->data->key;
+					return current->key;
 				}
 
 				const V& get() const {
-					return enclosingDictionary.tree->data->value;
+					return *(current->value);
 				}
 
 				void set(const V& value) {
-					enclosingDictionary.tree->data->value = value;
+					current->value = value;
 				}
 
 				void next() {
+					current = current->next();
+					index++;
 				}
 
 				void prev() {
+					current = current->prev();
+					index--;
 				}
 
 				bool hasNext() const {
+					return index < enclosingDictionary.size();
 				}
 
 				bool hasPrev() const {
+					return index > 0;	
 				}
 
-				Iterator(Dictionary<K, V>& enclosing) : enclosingDictionary(enclosing), nodeIndex(0) {
-					traverse(enclosing.tree);
+				Iterator(Dictionary<K, V>& enclosing) : enclosingDictionary(enclosing), index(0) {
+					auto root = enclosing.tree->root();
+
+					firstNode = root->findMin();
+					lastNode = root->findMax();
+
+					current = firstNode;
 				}
 
 			private:
 				Dictionary<K, V>& enclosingDictionary;
+				AVLTree<K, V> *firstNode, *lastNode, *current;
+				size_t index;
 		};
 
 		Iterator iterator() {
@@ -355,4 +437,6 @@ class Dictionary final {
 		AVLTree<K, V>* tree;
 
 		size_t dictionarySize;
+
+		bool *sizeChanged;
 };

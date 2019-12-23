@@ -79,7 +79,7 @@ class Array final
 				}
 
 				bool hasNext() const {
-					return currentIndex < enclosingArray.arraySize - 1;
+					return currentIndex <= enclosingArray.arraySize - 1;
 				}
 
 				bool hasPrev() const {

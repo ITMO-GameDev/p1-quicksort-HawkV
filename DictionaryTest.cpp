@@ -3,9 +3,9 @@
 TEST(DictionaryTest, Insert) { //вставка значений в словарь
   Dictionary<int, int> dict;
 
-	dict.put(6, 1);
-	dict.put(4, 7);
-	dict.put(3, 3);
+  dict.put(6, 1);
+  dict.put(4, 7);
+  dict.put(3, 3);
   
   EXPECT_TRUE(dict[4] == 7) << dict[4];
   EXPECT_TRUE(dict.size() == 3) << dict.size();
@@ -21,11 +21,11 @@ TEST(DictionaryTest, Insert) { //вставка значений в словар
 TEST(DictionaryTest, Iterator) { //вставка значений в дерево и проход по нему (inorder)
   Dictionary<int, std::string> dict;
 
-	dict.put(5, "a");
-	dict.put(2, "b");
-	dict.put(3, "c");
-	dict.put(1, "d");
-	dict.put(4, "e");
+  dict.put(5, "a");
+  dict.put(2, "b");
+  dict.put(3, "c");
+  dict.put(1, "d");
+  dict.put(4, "e");
   
   int i = 1;
   auto it = dict.iterator();
@@ -47,9 +47,9 @@ TEST(DictionaryTest, Iterator) { //вставка значений в дерев
 TEST(DictionaryTest, Delete) { //удаление значений из словаря
   Dictionary<std::string, int> dict;
 
-	dict.put("health", 1);
-	dict.put("armour", 2);
-	dict.put("attack", 3);  
+  dict.put("health", 1);
+  dict.put("armour", 2);
+  dict.put("attack", 3);  
            
   EXPECT_TRUE(dict.contains("health"));
   EXPECT_TRUE(dict["health"] == 1) << dict["health"];

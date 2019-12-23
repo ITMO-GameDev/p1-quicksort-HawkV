@@ -385,7 +385,7 @@ class Dictionary final {
 				}
 
 				void set(const V& value) {
-					current->value = value;
+					*(current->value) = value;
 				}
 
 				void next() {

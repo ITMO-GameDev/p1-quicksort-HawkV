@@ -136,6 +136,21 @@ public:
 			return this;
 		}
 
+		AVLTree<K, V>* childReplacement = nullptr;
+		if (node->height == 1) {
+			childReplacement = nullptr;
+
+			if (node->parent == nullptr) {
+				delete node->key;
+				delete node->value;
+
+				node->key = nullptr;
+				node->value = nullptr;
+
+				return node;
+			}
+		}
+
 		auto parent = node->parent;
 		bool isLeft = parent->left == node;
 
@@ -159,21 +174,8 @@ public:
 			return parent;
 		} 
 		
-		AVLTree<K, V>* childReplacement = nullptr;
 
-		if (node->height == 1) {
-			childReplacement = nullptr;
-
-			if (node->parent == nullptr) {
-				delete node->key;
-				delete node->value;
-
-				node->key = nullptr;
-				node->value = nullptr;
-
-				return node;
-			}
-		} else if (node->left == nullptr) {
+		if (node->left == nullptr) {
 			childReplacement = node->right;
 		} else if (node->right == nullptr) {
 			childReplacement = node->left;

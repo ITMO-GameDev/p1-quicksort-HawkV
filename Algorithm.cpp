@@ -34,12 +34,10 @@ void insertion_sort(T *first, T *last, Compare&& lambda) { // Сортировк
 template <typename T, typename Compare>
 int partition(T *first, T *last, T* pivot, Compare&& lambda) { // Разбиение Ломуто
 	size_t length = last - first;
-
 	size_t i = 0;
 	
 	T pivotValue = *pivot;
-	std::swap(*pivot, *(last - 1));
-		
+
 	for (size_t j = 0; j < length - 1; j++)
 	{
 		if (!lambda(pivotValue, *(first + j))) {
@@ -48,8 +46,6 @@ int partition(T *first, T *last, T* pivot, Compare&& lambda) { // Разбиен
 			i++;
 		}
 	}
-
-	std::swap(*(first + i), *(last - 1));
 
 	return i;
 }

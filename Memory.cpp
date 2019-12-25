@@ -310,9 +310,13 @@ public:
 	virtual void init() {
 		FSA = new FixedSizeAllocator();
 		FLA = new FreeListAllocator(FLAMemorySize);
+		
+		initialized = true;
 	}
 
-	virtual ~MemoryAllocator() {}
+	virtual ~MemoryAllocator() {
+		assert(destroyed);
+	}
 
 	virtual void* alloc(size_t size) {
 		if (BlockFSACheck(size)) {
@@ -331,5 +335,7 @@ public:
 	virtual void destroy() {
 		delete FSA;
 		delete FLA;
+		
+		destroyed = true;
 	}
 };

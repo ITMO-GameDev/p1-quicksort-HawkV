@@ -318,16 +318,20 @@ public:
 		assert(destroyed);
 	}
 
-	virtual void* alloc(size_t size) {
+	virtual void* alloc(size_t size) {		
 		if (BlockFSACheck(size)) {
 			return FSA->alloc(size);
-		} else {
+		} else if (size < TEN_MB) {
 			return FLA->alloc(size);
+		} else {
+			return VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		}
 	}
 
 	virtual void free(void* ptr) {
-		if (!FSA->free(ptr)) {
+		if((uintptr_t)ptr >= TEN_MB) {
+			VirtualFree(ptr, 0, MEM_RELEASE);
+		} else if (!FSA->free(ptr)) {
 			FLA->free(ptr);
 		}
 	}
